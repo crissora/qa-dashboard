@@ -95,8 +95,7 @@ tr:hover td { background:#f8f8f6; }
 const CONFIG = {
   clientId:       "f2670db8-0643-47b6-b62d-91ddf95a5f34",
   tenantId:       "74b9d1f5-f982-42bd-b3dc-9a8f0eb13ee7",
-  sharePointBase: "https://emtel663-my.sharepoint.com",
-  filePath:       "/personal/lider_documentacion_qa_proyecto-emtel_com_co/Documents/Predios.xlsx",
+  fileName:       "Predios.xlsx",
   sheets:         ["Pruebas sin Back", "Pruebas Exploratorias"],
   excelUrl:       "https://emtel663-my.sharepoint.com/:x:/r/personal/lider_documentacion_qa_proyecto-emtel_com_co/_layouts/15/Doc.aspx?sourcedoc=%7B6ca7c256-8e5b-4cb1-83a6-ab901f4f6fc8%7D&action=default",
   refreshInterval: 300000
@@ -312,20 +311,32 @@ async function loadData() {
     const token = await getToken();
     const h = { Authorization: `Bearer ${token}` };
 
-    const fileResp = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/root:${CONFIG.filePath}`,
+    // El archivo fue compartido por otra persona → buscarlo en "compartido conmigo"
+    const sharedResp = await fetch(
+      "https://graph.microsoft.com/v1.0/me/drive/sharedWithMe",
       { headers: h }
     );
-    const fileJson = await fileResp.json();
-    if (!fileJson.id) throw new Error("Archivo no encontrado. Verifica CONFIG.filePath → " + CONFIG.filePath);
+    const sharedJson = await sharedResp.json();
+    const items = sharedJson.value || [];
 
-    const driveId = fileJson.parentReference.driveId;
-    const itemId  = fileJson.id;
+    // Buscar por nombre de archivo (configurable)
+    const target = items.find(it =>
+      it.name && it.name.toLowerCase() === CONFIG.fileName.toLowerCase()
+    );
+
+    if (!target) {
+      const disponibles = items.map(i => i.name).filter(Boolean).join(", ") || "(ninguno)";
+      throw new Error(`No se encontró "${CONFIG.fileName}" entre los archivos compartidos. Disponibles: ${disponibles}`);
+    }
+
+    const driveId = target.remoteItem.parentReference.driveId;
+    const itemId  = target.remoteItem.id;
 
     for (const sheet of CONFIG.sheets) {
       const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets('${encodeURIComponent(sheet)}')/usedRange`;
       const r = await fetch(url, { headers: h });
       const j = await r.json();
+      if (j.error) throw new Error(`Hoja "${sheet}": ${j.error.message}`);
       sheetsData[sheet] = parseSheet(j.values || []);
     }
 
