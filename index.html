@@ -6,8 +6,15 @@
 <title>Dashboard QA</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<!-- MSAL desde unpkg (fuente oficial) -->
-<script src="https://unpkg.com/@azure/msal-browser@3.10.0/lib/msal-browser.js"></script>
+<!-- MSAL: archivo auto-hospedado en tu repo (descárgalo, ver instrucciones abajo).
+     Como respaldo intenta cargar desde jsDelivr la versión completa (no minificada). -->
+<script src="./msal-browser.min.js"></script>
+<script>
+  // Fallback: si el archivo local no cargó, intenta jsDelivr
+  if (typeof msal === "undefined") {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.28.1/lib/msal-browser.min.js"><\/script>');
+  }
+</script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, sans-serif; background: #f5f5f3; color: #1a1a1a; font-size: 14px; }
