@@ -6,8 +6,13 @@
 <title>Dashboard QA</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<!-- MSAL v2.x — única rama hospedada en el CDN oficial de Microsoft (v3 ya no está en CDN) -->
+<!-- MSAL v2.x — CDN principal (US West) con fallback automático a Europa Norte si falla -->
 <script src="https://alcdn.msauth.net/browser/2.38.4/js/msal-browser.min.js"></script>
+<script>
+  if (typeof msal === 'undefined') {
+    document.write('<scr'+'ipt src="https://alcdn.msftauth.net/browser/2.38.4/js/msal-browser.min.js"></scr'+'ipt>');
+  }
+</script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, sans-serif; background: #f5f5f3; color: #1a1a1a; font-size: 14px; }
@@ -201,6 +206,14 @@ let currentAccount = null;
 const scopes = ["Files.Read", "User.Read"];
 
 async function initMSAL() {
+  // Verificar que la librería MSAL haya cargado
+  if (typeof msal === 'undefined') {
+    const btn = document.getElementById("btn-login");
+    btn.disabled = true;
+    document.getElementById("btn-login-txt").textContent = "Error: no cargó MSAL — recarga la página";
+    console.error("MSAL no está definido. El CDN no respondió. Recarga la página (Ctrl+F5).");
+    return;
+  }
   const cfg = {
     auth: {
       clientId: CONFIG.clientId,
