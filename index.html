@@ -295,8 +295,26 @@ const msalInstance = new msal.PublicClientApplication(msalConfig);
 const scopes = ["Files.Read", "Sites.Read.All"];
 
 let currentAccount = null;
+let msalReady = false;
+
+// Inicializar MSAL antes de cualquier uso
+msalInstance.initialize().then(() => {
+  msalReady = true;
+  // Revisar si ya hay sesión activa al cargar la página
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length) {
+    currentAccount = accounts[0];
+    showDashboard();
+    loadData();
+    setInterval(loadData, CONFIG.refreshInterval);
+  }
+}).catch(e => console.error("Error inicializando MSAL:", e));
 
 async function login() {
+  if (!msalReady) {
+    alert("Espera un momento, la librería de autenticación aún está cargando.");
+    return;
+  }
   try {
     const resp = await msalInstance.loginPopup({ scopes });
     currentAccount = resp.account;
@@ -606,17 +624,7 @@ function switchTab(name, btn) {
   btn.classList.add("active");
 }
 
-// Revisar si ya hay sesión activa
-(async () => {
-  await msalInstance.initialize();
-  const accounts = msalInstance.getAllAccounts();
-  if (accounts.length) {
-    currentAccount = accounts[0];
-    showDashboard();
-    await loadData();
-    setInterval(loadData, CONFIG.refreshInterval);
-  }
-})();
+// La inicialización de MSAL ya se maneja arriba al cargar la página
 </script>
 </body>
 </html>
