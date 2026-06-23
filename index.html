@@ -6,13 +6,8 @@
 <title>Dashboard QA</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<!-- MSAL v2.x — CDN principal (US West) con fallback automático a Europa Norte si falla -->
-<script src="https://alcdn.msauth.net/browser/2.38.4/js/msal-browser.min.js"></script>
-<script>
-  if (typeof msal === 'undefined') {
-    document.write('<scr'+'ipt src="https://alcdn.msftauth.net/browser/2.38.4/js/msal-browser.min.js"></scr'+'ipt>');
-  }
-</script>
+<!-- MSAL v2.x — se carga dinámicamente con fallback en initMSAL() -->
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, sans-serif; background: #f5f5f3; color: #1a1a1a; font-size: 14px; }
@@ -205,13 +200,37 @@ let msalApp = null;
 let currentAccount = null;
 const scopes = ["Files.Read", "User.Read"];
 
+// Carga MSAL dinámicamente probando varios CDN hasta que uno funcione
+function cargarMSAL() {
+  const urls = [
+    "https://alcdn.msauth.net/browser/2.38.4/js/msal-browser.min.js",
+    "https://alcdn.msftauth.net/browser/2.38.4/js/msal-browser.min.js",
+    "https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.4/lib/msal-browser.min.js"
+  ];
+  return new Promise((resolve, reject) => {
+    let i = 0;
+    function intentar() {
+      if (typeof msal !== 'undefined') return resolve();
+      if (i >= urls.length) return reject(new Error("Ningún CDN de MSAL respondió"));
+      const s = document.createElement('script');
+      s.src = urls[i++];
+      s.onload = () => resolve();
+      s.onerror = () => intentar();
+      document.head.appendChild(s);
+    }
+    intentar();
+  });
+}
+
 async function initMSAL() {
-  // Verificar que la librería MSAL haya cargado
-  if (typeof msal === 'undefined') {
+  // Cargar la librería MSAL antes de usarla
+  try {
+    await cargarMSAL();
+  } catch (e) {
     const btn = document.getElementById("btn-login");
     btn.disabled = true;
     document.getElementById("btn-login-txt").textContent = "Error: no cargó MSAL — recarga la página";
-    console.error("MSAL no está definido. El CDN no respondió. Recarga la página (Ctrl+F5).");
+    console.error(e);
     return;
   }
   const cfg = {
