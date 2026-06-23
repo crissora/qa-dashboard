@@ -197,7 +197,7 @@ const CONFIG = {
 // ═══════════════════════════════════════════
 let msalApp = null;
 let currentAccount = null;
-const scopes = ["Files.Read", "User.Read"];
+const scopes = ["Files.Read", "Files.Read.All", "User.Read"];
 
 // Carga MSAL dinámicamente probando varios CDN hasta que uno funcione
 function cargarMSAL() {
