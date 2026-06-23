@@ -6,22 +6,19 @@
 <title>Dashboard QA</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<!-- MSAL para autenticación Microsoft -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-msal-browser/3.10.0/msal-browser.min.js"></script>
+<!-- MSAL desde unpkg (fuente oficial) -->
+<script src="https://unpkg.com/@azure/msal-browser@3.10.0/lib/msal-browser.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, sans-serif; background: #f5f5f3; color: #1a1a1a; font-size: 14px; }
 .app { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
-
-/* ── LOGIN ── */
 #login-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:16px; }
 #login-screen h1 { font-size:22px; font-weight:500; }
 #login-screen p { color:#666; font-size:14px; }
 .btn-ms { display:flex; align-items:center; gap:10px; background:#0078d4; color:#fff; border:none; border-radius:8px; padding:12px 24px; font-size:15px; cursor:pointer; font-weight:500; }
 .btn-ms:hover { background:#006cbe; }
+.btn-ms:disabled { background:#90c4e8; cursor:not-allowed; }
 #dashboard { display:none; }
-
-/* ── HEADER ── */
 .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:12px; }
 .header-left h1 { font-size:18px; font-weight:500; }
 .badge { display:inline-block; background:#e6f1fb; color:#185fa5; font-size:11px; padding:3px 10px; border-radius:20px; font-weight:500; }
@@ -31,44 +28,31 @@ button:hover { background:#f0f0ee; }
 .btn-refresh { background:#e6f1fb; color:#185fa5; border-color:#b5d4f4; display:flex; align-items:center; gap:6px; }
 .btn-logout { background:#fcebeb; color:#a32d2d; border-color:#f4b5b5; }
 .update-info { font-size:11px; color:#aaa; display:flex; align-items:center; gap:4px; margin-top:3px; }
-
-/* ── MÉTRICAS ── */
 .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:1.5rem; }
 .metric-card { background:#f0f0ee; border-radius:8px; padding:14px 16px; }
 .metric-card .label { font-size:12px; color:#666; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
 .metric-card .value { font-size:26px; font-weight:500; }
 .metric-card .sub { font-size:11px; color:#999; margin-top:3px; }
-
-/* ── PROGRESO ── */
 .progress-wrap { background:#fff; border:0.5px solid rgba(0,0,0,0.12); border-radius:12px; padding:16px; margin-bottom:1.5rem; }
 .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
 .progress-header span { font-size:13px; font-weight:500; }
 .pct { font-size:20px; font-weight:500; color:#3b6d11; }
 .bar-track { height:10px; background:#eee; border-radius:20px; overflow:hidden; }
 .bar-fill { height:100%; background:#1d9e75; border-radius:20px; transition:width 0.6s ease; }
-
-/* ── TABS ── */
 .tab-bar { display:flex; gap:4px; margin-bottom:1rem; background:#f0f0ee; border-radius:10px; padding:4px; width:fit-content; }
 .tab { padding:6px 16px; border-radius:8px; cursor:pointer; font-size:13px; border:none; background:transparent; color:#666; }
 .tab.active { background:#fff; color:#1a1a1a; font-weight:500; border:0.5px solid rgba(0,0,0,0.12); }
-
-/* ── SHEET TABS ── */
 .sheet-tabs { display:flex; gap:4px; margin-bottom:1rem; }
 .sheet-tab { padding:5px 14px; border-radius:8px; cursor:pointer; font-size:12px; border:0.5px solid rgba(0,0,0,0.15); background:#fff; color:#666; }
 .sheet-tab.active { background:#185fa5; color:#fff; border-color:#185fa5; }
-
 .view { display:none; }
 .view.active { display:block; }
-
-/* ── CHARTS ── */
 .charts-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.5rem; }
 .card { background:#fff; border:0.5px solid rgba(0,0,0,0.12); border-radius:12px; padding:16px; }
 .card-title { font-size:13px; font-weight:500; margin-bottom:12px; color:#555; }
 .legend { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px; font-size:12px; color:#666; }
 .legend span { display:flex; align-items:center; gap:4px; }
 .legend-dot { width:10px; height:10px; border-radius:2px; }
-
-/* ── TABLA ── */
 .filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
 .filters label { font-size:12px; color:#666; }
 .table-wrap { overflow-x:auto; }
@@ -78,15 +62,13 @@ td { padding:8px 10px; border-bottom:0.5px solid rgba(0,0,0,0.08); vertical-alig
 tr:last-child td { border-bottom:none; }
 tr:hover td { background:#f8f8f6; }
 .pill { display:inline-block; font-size:11px; padding:2px 9px; border-radius:20px; font-weight:500; }
-.pill-red { background:#fcebeb; color:#a32d2d; }
 .pill-amber { background:#faeeda; color:#854f0b; }
 .pill-green { background:#eaf3de; color:#3b6d11; }
 .pill-blue { background:#e6f1fb; color:#185fa5; }
 .pill-gray { background:#f1efe8; color:#5f5e5a; }
+.pill-red { background:#fcebeb; color:#a32d2d; }
 .edit-select { font-size:11px; padding:2px 6px; border-radius:6px; border:0.5px solid rgba(0,0,0,0.15); background:#fff; }
 .ev-icon { color:#185fa5; font-size:15px; }
-
-/* ── VISTA DEV ── */
 .dev-view { background:#fff; border:0.5px solid rgba(0,0,0,0.12); border-radius:12px; padding:16px; }
 .dev-pantalla { margin-bottom:16px; }
 .dev-pantalla-title { font-size:13px; font-weight:500; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
@@ -97,91 +79,58 @@ tr:hover td { background:#f8f8f6; }
 .prio-alta { background:#fcebeb; color:#a32d2d; }
 .prio-media { background:#faeeda; color:#854f0b; }
 .prio-baja { background:#eaf3de; color:#3b6d11; }
-
-/* ── LOADER ── */
 .loader { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px; gap:12px; color:#666; }
 .spinner { width:32px; height:32px; border:3px solid #e0e0e0; border-top-color:#185fa5; border-radius:50%; animation:spin 0.8s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
-
 .empty { text-align:center; padding:40px; color:#999; font-size:13px; }
 @media (max-width:600px) { .charts-row { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════
-     🔐  CONFIGURA AQUÍ TUS CREDENCIALES
-     ════════════════════════════════════════ -->
 <script>
+// ═══════════════════════════════════════════
+//  CONFIGURACIÓN — solo edita este bloque
+// ═══════════════════════════════════════════
 const CONFIG = {
-  // 1. Reemplaza con tu CLIENT_ID de Azure AD
-  clientId: "f2670db8-0643-47b6-b62d-91ddf95a5f34",
-
-  // 2. Reemplaza con tu TENANT_ID de Azure AD
-  tenantId: "74b9d1f5-f982-42bd-b3dc-9a8f0eb13ee7",
-
-  // 3. URL base de tu SharePoint (solo el dominio)
-  //    Ej: "https://emtel663-my.sharepoint.com"
+  clientId:       "f2670db8-0643-47b6-b62d-91ddf95a5f34",
+  tenantId:       "74b9d1f5-f982-42bd-b3dc-9a8f0eb13ee7",
   sharePointBase: "https://emtel663-my.sharepoint.com",
-
-  // 4. Ruta del archivo en SharePoint (OneDrive personal del usuario)
-  filePath: "/personal/lider_documentacion_qa_proyecto-emtel_com_co/Documents/Predios.xlsx",
-
-  // 5. Nombres exactos de las hojas en el Excel
-  sheets: ["Pruebas sin Back", "Pruebas Exploratorias"],
-
-  // 6. URL del archivo para el enlace de evidencias
-  excelUrl: "https://emtel663-my.sharepoint.com/:x:/r/personal/lider_documentacion_qa_proyecto-emtel_com_co/_layouts/15/Doc.aspx?sourcedoc=%7B6ca7c256-8e5b-4cb1-83a6-ab901f4f6fc8%7D&action=default",
-
-  // 7. Intervalo de refresco automático en milisegundos (5 min = 300000)
+  filePath:       "/personal/lider_documentacion_qa_proyecto-emtel_com_co/Documents/Predios.xlsx",
+  sheets:         ["Pruebas sin Back", "Pruebas Exploratorias"],
+  excelUrl:       "https://emtel663-my.sharepoint.com/:x:/r/personal/lider_documentacion_qa_proyecto-emtel_com_co/_layouts/15/Doc.aspx?sourcedoc=%7B6ca7c256-8e5b-4cb1-83a6-ab901f4f6fc8%7D&action=default",
   refreshInterval: 300000
 };
 </script>
-<!-- ════════════════════════════════════════ -->
 
-<!-- PANTALLA DE LOGIN -->
+<!-- LOGIN -->
 <div id="login-screen">
   <i class="ti ti-table-filled" style="font-size:48px;color:#185fa5"></i>
   <h1>Dashboard QA</h1>
   <p>Inicia sesión con tu cuenta Microsoft 365 para cargar las incidencias</p>
-  <button class="btn-ms" onclick="login()">
-    <i class="ti ti-brand-windows"></i> Iniciar sesión con Microsoft
+  <button class="btn-ms" id="btn-login" onclick="login()" disabled>
+    <i class="ti ti-brand-windows"></i> <span id="btn-login-txt">Cargando...</span>
   </button>
   <p style="font-size:12px;color:#bbb;margin-top:8px">Los datos se leen directamente desde tu Excel en OneDrive</p>
 </div>
 
-<!-- DASHBOARD PRINCIPAL -->
+<!-- DASHBOARD -->
 <div id="dashboard">
 <div class="app">
-
-  <!-- HEADER -->
   <div class="header">
     <div class="header-left">
-      <h1>Dashboard QA &nbsp;<span class="badge" id="modulo-badge">Cargando...</span></h1>
-      <div class="update-info">
-        <i class="ti ti-refresh"></i>
-        <span id="last-update">—</span>
-        &nbsp;·&nbsp;
-        <span id="total-reg">0</span> registros
-      </div>
+      <h1>Dashboard QA &nbsp;<span class="badge" id="modulo-badge">Módulo</span></h1>
+      <div class="update-info"><i class="ti ti-refresh"></i><span id="last-update">—</span>&nbsp;·&nbsp;<span id="total-reg">0</span> registros</div>
     </div>
     <div class="header-actions">
       <select id="modulo-sel" onchange="document.getElementById('modulo-badge').textContent='Módulo: '+this.value">
-        <option>Conciliaciones</option>
-        <option>Alarmas</option>
-        <option>Documentación</option>
-        <option>Contratos</option>
+        <option>Conciliaciones</option><option>Alarmas</option><option>Documentación</option><option>Contratos</option>
       </select>
-      <button class="btn-refresh" onclick="loadData()">
-        <i class="ti ti-refresh"></i> Actualizar
-      </button>
-      <button class="btn-logout" onclick="logout()">
-        <i class="ti ti-logout"></i> Salir
-      </button>
+      <button class="btn-refresh" onclick="loadData()"><i class="ti ti-refresh"></i> Actualizar</button>
+      <button class="btn-logout" onclick="logout()"><i class="ti ti-logout"></i> Salir</button>
     </div>
   </div>
 
-  <!-- MÉTRICAS -->
   <div class="metrics">
     <div class="metric-card"><div class="label"><i class="ti ti-list-check"></i> Total</div><div class="value" id="m-total">—</div><div class="sub">incidencias</div></div>
     <div class="metric-card"><div class="label"><i class="ti ti-circle-check" style="color:#1d9e75"></i> Resueltas</div><div class="value" id="m-ok" style="color:#1d9e75">—</div><div class="sub">campos ok</div></div>
@@ -190,80 +139,46 @@ const CONFIG = {
     <div class="metric-card"><div class="label"><i class="ti ti-flame" style="color:#a32d2d"></i> Críticas</div><div class="value" id="m-crit" style="color:#a32d2d">—</div><div class="sub">prioridad alta</div></div>
   </div>
 
-  <!-- BARRA DE PROGRESO -->
   <div class="progress-wrap">
     <div class="progress-header"><span>Avance del módulo</span><span class="pct" id="pct-val">0%</span></div>
     <div class="bar-track"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
-    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#bbb">
-      <span>0%</span><span>Meta: 100% resueltas</span><span>100%</span>
-    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#bbb"><span>0%</span><span>Meta: 100% resueltas</span><span>100%</span></div>
   </div>
 
-  <!-- TABS PRINCIPALES -->
   <div class="tab-bar">
     <button class="tab active" onclick="switchTab('general',this)"><i class="ti ti-chart-pie"></i> General</button>
     <button class="tab" onclick="switchTab('incidencias',this)"><i class="ti ti-table"></i> Incidencias</button>
     <button class="tab" onclick="switchTab('dev',this)"><i class="ti ti-code"></i> Vista Dev</button>
   </div>
 
-  <!-- ── VISTA GENERAL ── -->
   <div id="view-general" class="view active">
     <div class="charts-row">
-      <div class="card">
-        <div class="card-title">Estado de incidencias</div>
-        <div class="legend">
-          <span><span class="legend-dot" style="background:#1d9e75"></span>Resueltas</span>
-          <span><span class="legend-dot" style="background:#ef9f27"></span>Pendientes</span>
-          <span><span class="legend-dot" style="background:#378add"></span>En revisión</span>
-        </div>
+      <div class="card"><div class="card-title">Estado de incidencias</div>
+        <div class="legend"><span><span class="legend-dot" style="background:#1d9e75"></span>Resueltas</span><span><span class="legend-dot" style="background:#ef9f27"></span>Pendientes</span><span><span class="legend-dot" style="background:#378add"></span>En revisión</span></div>
         <div style="position:relative;height:200px"><canvas id="chart-estado"></canvas></div>
       </div>
-      <div class="card">
-        <div class="card-title">Errores pendientes por pantalla</div>
+      <div class="card"><div class="card-title">Errores pendientes por pantalla</div>
         <div style="position:relative;height:230px"><canvas id="chart-pantalla"></canvas></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title">Distribución por prioridad</div>
-      <div class="legend">
-        <span><span class="legend-dot" style="background:#e24b4a"></span>Alta</span>
-        <span><span class="legend-dot" style="background:#ef9f27"></span>Media</span>
-        <span><span class="legend-dot" style="background:#639922"></span>Baja</span>
-      </div>
+    <div class="card"><div class="card-title">Distribución por prioridad</div>
+      <div class="legend"><span><span class="legend-dot" style="background:#e24b4a"></span>Alta</span><span><span class="legend-dot" style="background:#ef9f27"></span>Media</span><span><span class="legend-dot" style="background:#639922"></span>Baja</span></div>
       <div style="position:relative;height:180px"><canvas id="chart-prio"></canvas></div>
     </div>
   </div>
 
-  <!-- ── VISTA INCIDENCIAS ── -->
   <div id="view-incidencias" class="view">
-    <!-- SHEET TABS -->
     <div class="sheet-tabs" id="sheet-tabs"></div>
     <div class="card">
       <div class="filters">
-        <label>Pantalla:</label>
-        <select id="fil-pantalla" onchange="renderTabla()"><option value="">Todas</option></select>
-        <label>Estado:</label>
-        <select id="fil-estado" onchange="renderTabla()">
-          <option value="">Todos</option>
-          <option>Pendiente</option>
-          <option>Resuelto</option>
-          <option>En revisión</option>
-        </select>
-        <label>Prioridad:</label>
-        <select id="fil-prio" onchange="renderTabla()">
-          <option value="">Todas</option>
-          <option>Alta</option>
-          <option>Media</option>
-          <option>Baja</option>
-        </select>
+        <label>Pantalla:</label><select id="fil-pantalla" onchange="renderTabla()"><option value="">Todas</option></select>
+        <label>Estado:</label><select id="fil-estado" onchange="renderTabla()"><option value="">Todos</option><option>Pendiente</option><option>Resuelto</option><option>En revisión</option></select>
+        <label>Prioridad:</label><select id="fil-prio" onchange="renderTabla()"><option value="">Todas</option><option>Alta</option><option>Media</option><option>Baja</option></select>
       </div>
-      <div id="tabla-container">
-        <div class="loader"><div class="spinner"></div><span>Cargando datos...</span></div>
-      </div>
+      <div id="tabla-container"><div class="loader"><div class="spinner"></div><span>Cargando datos...</span></div></div>
     </div>
   </div>
 
-  <!-- ── VISTA DEV ── -->
   <div id="view-dev" class="view">
     <div class="sheet-tabs" id="sheet-tabs-dev"></div>
     <div class="dev-view">
@@ -274,60 +189,64 @@ const CONFIG = {
       <div id="dev-list"></div>
     </div>
   </div>
-
-</div><!-- /.app -->
-</div><!-- /#dashboard -->
+</div>
+</div>
 
 <script>
-// ═══════════════════════════════════════════════════
-//  MSAL — Autenticación Microsoft
-// ═══════════════════════════════════════════════════
-const msalConfig = {
-  auth: {
-    clientId: CONFIG.clientId,
-    authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
-    redirectUri: window.location.origin + window.location.pathname
-  },
-  cache: { cacheLocation: "sessionStorage" }
-};
-
-const msalInstance = new msal.PublicClientApplication(msalConfig);
-const scopes = ["Files.Read", "Sites.Read.All"];
-
+// ═══════════════════════════════════════════
+//  MSAL — init seguro (espera a que cargue)
+// ═══════════════════════════════════════════
+let msalApp = null;
 let currentAccount = null;
-let msalReady = false;
+const scopes = ["Files.Read", "Sites.Read.All", "User.Read"];
 
-// Inicializar MSAL antes de cualquier uso
-msalInstance.initialize().then(() => {
-  msalReady = true;
-  // Revisar si ya hay sesión activa al cargar la página
-  const accounts = msalInstance.getAllAccounts();
-  if (accounts.length) {
+async function initMSAL() {
+  const cfg = {
+    auth: {
+      clientId: CONFIG.clientId,
+      authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+      redirectUri: window.location.origin + window.location.pathname
+    },
+    cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
+  };
+  msalApp = new msal.PublicClientApplication(cfg);
+  await msalApp.initialize();
+
+  // Manejar redirect si viene de un login redirect
+  await msalApp.handleRedirectPromise();
+
+  const accounts = msalApp.getAllAccounts();
+  if (accounts.length > 0) {
     currentAccount = accounts[0];
     showDashboard();
-    loadData();
+    await loadData();
     setInterval(loadData, CONFIG.refreshInterval);
   }
-}).catch(e => console.error("Error inicializando MSAL:", e));
+
+  // Habilitar botón cuando MSAL esté listo
+  const btn = document.getElementById("btn-login");
+  btn.disabled = false;
+  document.getElementById("btn-login-txt").textContent = "Iniciar sesión con Microsoft";
+}
 
 async function login() {
-  if (!msalReady) {
-    alert("Espera un momento, la librería de autenticación aún está cargando.");
-    return;
-  }
+  if (!msalApp) return;
   try {
-    const resp = await msalInstance.loginPopup({ scopes });
+    const resp = await msalApp.loginPopup({ scopes });
     currentAccount = resp.account;
     showDashboard();
     await loadData();
     setInterval(loadData, CONFIG.refreshInterval);
   } catch (e) {
+    console.error(e);
     alert("Error al iniciar sesión: " + e.message);
   }
 }
 
-function logout() {
-  msalInstance.logoutPopup();
+async function logout() {
+  if (!msalApp) return;
+  await msalApp.logoutPopup({ account: currentAccount });
+  currentAccount = null;
   document.getElementById("login-screen").style.display = "flex";
   document.getElementById("dashboard").style.display = "none";
 }
@@ -340,79 +259,69 @@ function showDashboard() {
 async function getToken() {
   const req = { scopes, account: currentAccount };
   try {
-    const resp = await msalInstance.acquireTokenSilent(req);
-    return resp.accessToken;
+    const r = await msalApp.acquireTokenSilent(req);
+    return r.accessToken;
   } catch {
-    const resp = await msalInstance.acquireTokenPopup(req);
-    return resp.accessToken;
+    const r = await msalApp.acquireTokenPopup(req);
+    return r.accessToken;
   }
 }
 
-// ═══════════════════════════════════════════════════
-//  GRAPH API — Leer Excel
-// ═══════════════════════════════════════════════════
-
-// Datos por hoja: { "Pruebas sin Back": [...], "Pruebas Exploratorias": [...] }
+// ═══════════════════════════════════════════
+//  GRAPH API — leer Excel
+// ═══════════════════════════════════════════
 let sheetsData = {};
-let localMeta = {}; // prioridad y categoría editables por ID
-let activeSheet = CONFIG.sheets[0];
+let localMeta  = {};
+let activeSheet    = CONFIG.sheets[0];
 let activeSheetDev = CONFIG.sheets[0];
 
 async function loadData() {
   try {
     const token = await getToken();
-    const headers = { Authorization: `Bearer ${token}` };
+    const h = { Authorization: `Bearer ${token}` };
 
-    // Obtener driveItem por ruta
-    const encodedPath = encodeURIComponent(CONFIG.filePath);
-    const rootUrl = `${CONFIG.sharePointBase.replace("https://","").split(".")[0]}`;
-    // Usamos el endpoint de OneDrive personal
-    const driveUrl = `https://graph.microsoft.com/v1.0/me/drive/root:${CONFIG.filePath}`;
-    const fileResp = await fetch(driveUrl, { headers });
+    const fileResp = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/root:${CONFIG.filePath}`,
+      { headers: h }
+    );
     const fileJson = await fileResp.json();
-    const driveId = fileJson.parentReference?.driveId;
+    if (!fileJson.id) throw new Error("Archivo no encontrado. Verifica CONFIG.filePath → " + CONFIG.filePath);
+
+    const driveId = fileJson.parentReference.driveId;
     const itemId  = fileJson.id;
 
-    if (!itemId) throw new Error("No se encontró el archivo Excel. Verifica CONFIG.filePath");
-
-    // Leer cada hoja
     for (const sheet of CONFIG.sheets) {
-      const rangeUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets('${encodeURIComponent(sheet)}')/usedRange`;
-      const rangeResp = await fetch(rangeUrl, { headers });
-      const rangeJson = await rangeResp.json();
-      sheetsData[sheet] = parseSheet(rangeJson.values || []);
+      const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets('${encodeURIComponent(sheet)}')/usedRange`;
+      const r = await fetch(url, { headers: h });
+      const j = await r.json();
+      sheetsData[sheet] = parseSheet(j.values || []);
     }
 
-    document.getElementById("last-update").textContent = "Actualizado: " + new Date().toLocaleTimeString("es-CO");
+    document.getElementById("last-update").textContent =
+      "Actualizado: " + new Date().toLocaleTimeString("es-CO");
     updateAll();
 
   } catch (e) {
     console.error(e);
-    document.getElementById("last-update").textContent = "⚠ Error al cargar: " + e.message;
+    document.getElementById("last-update").textContent = "⚠ " + e.message;
   }
 }
 
 function parseSheet(rows) {
   if (rows.length < 2) return [];
-  const headers = rows[0].map(h => String(h).trim().toLowerCase());
-  const idxPantalla = headers.findIndex(h => h.includes("pantalla"));
-  const idxCampo    = headers.findIndex(h => h.includes("campo"));
-  const idxCumple   = headers.findIndex(h => h.includes("cumple"));
-  const idxError    = headers.findIndex(h => h.includes("error"));
-  const idxEvidencia= headers.findIndex(h => h.includes("evidencia"));
-
+  const h = rows[0].map(x => String(x).trim().toLowerCase());
+  const gi = k => h.findIndex(x => x.includes(k));
+  const iP = gi("pantalla"), iC = gi("campo"), iCu = gi("cumple"), iE = gi("error"), iEv = gi("evidencia");
   return rows.slice(1).map((row, i) => {
-    const id = `row_${i}`;
-    const cumpleVal = String(row[idxCumple] || "").trim().toLowerCase();
-    const cumple = cumpleVal === "sí" || cumpleVal === "si" || cumpleVal === "yes" || cumpleVal === "true" || cumpleVal === "1" ? "Sí" : "No";
-    const tieneEvidencia = idxEvidencia >= 0 && row[idxEvidencia] && String(row[idxEvidencia]).trim() !== "";
+    const id = `r${i}`;
+    const cv = String(row[iCu] || "").trim().toLowerCase();
+    const cumple = ["sí","si","yes","true","1"].includes(cv) ? "Sí" : "No";
+    const ev = iEv >= 0 && row[iEv] && String(row[iEv]).trim() !== "";
     return {
-      id,
-      pantalla: String(row[idxPantalla] || "").trim(),
-      campo:    String(row[idxCampo]    || "").trim(),
-      cumple,
-      error:    String(row[idxError]    || "").trim(),
-      evidencia: tieneEvidencia,
+      id, cumple, evidencia: ev,
+      pantalla: String(row[iP]  || "").trim(),
+      campo:    String(row[iC]  || "").trim(),
+      error:    String(row[iE]  || "").trim(),
       estado:   cumple === "Sí" ? "Resuelto" : (localMeta[id]?.estado || "Pendiente"),
       prioridad: localMeta[id]?.prioridad || "Media",
       categoria: localMeta[id]?.categoria || "Funcional"
@@ -420,22 +329,20 @@ function parseSheet(rows) {
   }).filter(r => r.pantalla);
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════
 //  RENDER
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════
 let cE, cP, cPr;
 
-function allData() {
-  return Object.values(sheetsData).flat();
-}
+function allData() { return Object.values(sheetsData).flat(); }
 
 function calcMetrics(data) {
-  const total = data.length;
-  const ok    = data.filter(d => d.estado === "Resuelto").length;
-  const pend  = data.filter(d => d.estado === "Pendiente").length;
-  const rev   = data.filter(d => d.estado === "En revisión").length;
-  const crit  = data.filter(d => d.prioridad === "Alta").length;
-  const pct   = total ? Math.round((ok / total) * 100) : 0;
+  const total = data.length,
+    ok   = data.filter(d => d.estado === "Resuelto").length,
+    pend = data.filter(d => d.estado === "Pendiente").length,
+    rev  = data.filter(d => d.estado === "En revisión").length,
+    crit = data.filter(d => d.prioridad === "Alta").length,
+    pct  = total ? Math.round(ok / total * 100) : 0;
   document.getElementById("m-total").textContent = total;
   document.getElementById("m-ok").textContent    = ok;
   document.getElementById("m-pend").textContent  = pend;
@@ -447,184 +354,145 @@ function calcMetrics(data) {
 }
 
 function buildCharts(data) {
-  const ok   = data.filter(d => d.estado === "Resuelto").length;
-  const pend = data.filter(d => d.estado === "Pendiente").length;
-  const rev  = data.filter(d => d.estado === "En revisión").length;
-  const pantallas = [...new Set(data.map(d => d.pantalla))];
-  const pantCounts = pantallas.map(p => data.filter(d => d.pantalla === p && d.estado !== "Resuelto").length);
-  const alta  = data.filter(d => d.prioridad === "Alta").length;
-  const media = data.filter(d => d.prioridad === "Media").length;
-  const baja  = data.filter(d => d.prioridad === "Baja").length;
-
+  const ok   = data.filter(d => d.estado === "Resuelto").length,
+    pend = data.filter(d => d.estado === "Pendiente").length,
+    rev  = data.filter(d => d.estado === "En revisión").length;
+  const pans = [...new Set(data.map(d => d.pantalla))];
+  const panC = pans.map(p => data.filter(d => d.pantalla === p && d.estado !== "Resuelto").length);
+  const alta = data.filter(d => d.prioridad === "Alta").length,
+    med  = data.filter(d => d.prioridad === "Media").length,
+    baja = data.filter(d => d.prioridad === "Baja").length;
   if (cE) cE.destroy();
   cE = new Chart(document.getElementById("chart-estado"), {
     type: "doughnut",
     data: { labels: ["Resueltas","Pendientes","En revisión"], datasets: [{ data: [ok,pend,rev], backgroundColor: ["#1d9e75","#ef9f27","#378add"], borderWidth: 0 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
   });
   if (cP) cP.destroy();
   cP = new Chart(document.getElementById("chart-pantalla"), {
     type: "bar",
-    data: { labels: pantallas.map(p => p.length > 16 ? p.slice(0,13)+"…" : p), datasets: [{ data: pantCounts, backgroundColor: "#378add", borderRadius: 4, borderWidth: 0 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 10 }, maxRotation: 40 } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    data: { labels: pans.map(p => p.length>16?p.slice(0,13)+"…":p), datasets: [{ data: panC, backgroundColor: "#378add", borderRadius:4, borderWidth:0 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ font:{ size:10 }, maxRotation:40 } }, y:{ beginAtZero:true, ticks:{ stepSize:1 } } } }
   });
   if (cPr) cPr.destroy();
   cPr = new Chart(document.getElementById("chart-prio"), {
     type: "bar",
-    data: { labels: ["Alta","Media","Baja"], datasets: [{ data: [alta,media,baja], backgroundColor: ["#e24b4a","#ef9f27","#639922"], borderRadius: 4, borderWidth: 0 }] },
-    options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    data: { labels: ["Alta","Media","Baja"], datasets: [{ data: [alta,med,baja], backgroundColor: ["#e24b4a","#ef9f27","#639922"], borderRadius:4, borderWidth:0 }] },
+    options: { indexAxis:"y", responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ beginAtZero:true, ticks:{ stepSize:1 } } } }
   });
 }
 
-function buildSheetTabs(containerId, onClick) {
-  const el = document.getElementById(containerId);
-  el.innerHTML = CONFIG.sheets.map(s =>
-    `<button class="sheet-tab ${s === activeSheet ? 'active' : ''}" onclick="${onClick}('${s}',this)">${s}</button>`
+function estadoPill(e) {
+  return e==="Resuelto"?`<span class="pill pill-green">${e}</span>`:
+         e==="Pendiente"?`<span class="pill pill-amber">${e}</span>`:
+         `<span class="pill pill-blue">${e}</span>`;
+}
+
+function buildSheetTabs(cid, fn) {
+  document.getElementById(cid).innerHTML = CONFIG.sheets.map(s =>
+    `<button class="sheet-tab ${s===activeSheet?'active':''}" onclick="${fn}('${s}',this)">${s}</button>`
   ).join("");
 }
 
-function switchSheet(name, btn) {
-  activeSheet = name;
+function switchSheet(n, btn) {
+  activeSheet = n;
   document.querySelectorAll("#sheet-tabs .sheet-tab").forEach(t => t.classList.remove("active"));
-  btn.classList.add("active");
-  fillFiltros();
-  renderTabla();
+  btn.classList.add("active"); fillFiltros(); renderTabla();
 }
-
-function switchSheetDev(name, btn) {
-  activeSheetDev = name;
+function switchSheetDev(n, btn) {
+  activeSheetDev = n;
   document.querySelectorAll("#sheet-tabs-dev .sheet-tab").forEach(t => t.classList.remove("active"));
-  btn.classList.add("active");
-  renderDev();
+  btn.classList.add("active"); renderDev();
 }
 
 function fillFiltros() {
-  const data = sheetsData[activeSheet] || [];
-  const pantallas = [...new Set(data.map(d => d.pantalla))];
+  const pans = [...new Set((sheetsData[activeSheet]||[]).map(d => d.pantalla))];
   document.getElementById("fil-pantalla").innerHTML =
-    `<option value="">Todas</option>` + pantallas.map(p => `<option>${p}</option>`).join("");
-}
-
-function estadoPill(e) {
-  if (e === "Resuelto")    return `<span class="pill pill-green">${e}</span>`;
-  if (e === "Pendiente")   return `<span class="pill pill-amber">${e}</span>`;
-  if (e === "En revisión") return `<span class="pill pill-blue">${e}</span>`;
-  return `<span class="pill pill-gray">${e}</span>`;
+    `<option value="">Todas</option>` + pans.map(p=>`<option>${p}</option>`).join("");
 }
 
 function renderTabla() {
   const data = sheetsData[activeSheet] || [];
-  const fp  = document.getElementById("fil-pantalla").value;
-  const fe  = document.getElementById("fil-estado").value;
-  const fpr = document.getElementById("fil-prio").value;
-  const filtered = data.filter(d =>
-    (!fp || d.pantalla === fp) &&
-    (!fe || d.estado === fe) &&
-    (!fpr || d.prioridad === fpr)
-  );
-
-  const container = document.getElementById("tabla-container");
-  if (!filtered.length) {
-    container.innerHTML = `<div class="empty"><i class="ti ti-mood-empty" style="font-size:32px"></i><br>Sin registros con esos filtros</div>`;
-    return;
-  }
-
-  container.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr>
-      <th>#</th><th>Pantalla</th><th>Campo</th><th>¿Cumple?</th>
-      <th>Error</th><th>Evidencia</th><th>Estado</th><th>Prioridad</th><th>Categoría</th>
-    </tr></thead>
-    <tbody>${filtered.map((d,i) => `<tr>
+  const fp = document.getElementById("fil-pantalla").value,
+    fe  = document.getElementById("fil-estado").value,
+    fpr = document.getElementById("fil-prio").value;
+  const f = data.filter(d => (!fp||d.pantalla===fp)&&(!fe||d.estado===fe)&&(!fpr||d.prioridad===fpr));
+  const cats = ["Validación","Seguridad","UI","Funcional","Compatibilidad","Exportación","Auditoría","Notificaciones","Reportes"];
+  const tc = document.getElementById("tabla-container");
+  if (!f.length) { tc.innerHTML=`<div class="empty">Sin registros con esos filtros</div>`; return; }
+  tc.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Pantalla</th><th>Campo</th><th>¿Cumple?</th><th>Error</th><th>Evidencia</th><th>Estado</th><th>Prioridad</th><th>Categoría</th></tr></thead>
+    <tbody>${f.map((d,i)=>`<tr>
       <td style="color:#bbb">${i+1}</td>
-      <td>${d.pantalla}</td>
-      <td>${d.campo}</td>
-      <td>${d.cumple === "Sí"
-        ? '<i class="ti ti-check" style="color:#1d9e75"></i>'
-        : '<i class="ti ti-x" style="color:#a32d2d"></i>'}</td>
-      <td style="max-width:200px;color:${d.error ? "#1a1a1a" : "#bbb"}">${d.error || "—"}</td>
-      <td style="text-align:center">${d.evidencia
-        ? `<a href="${CONFIG.excelUrl}" target="_blank" title="Ver evidencia en Excel"><i class="ti ti-paperclip ev-icon"></i></a>`
-        : '<span style="color:#ddd">—</span>'}</td>
+      <td>${d.pantalla}</td><td>${d.campo}</td>
+      <td>${d.cumple==="Sí"?'<i class="ti ti-check" style="color:#1d9e75"></i>':'<i class="ti ti-x" style="color:#a32d2d"></i>'}</td>
+      <td style="max-width:200px;color:${d.error?"#1a1a1a":"#bbb"}">${d.error||"—"}</td>
+      <td style="text-align:center">${d.evidencia?`<a href="${CONFIG.excelUrl}" target="_blank" title="Ver en Excel"><i class="ti ti-paperclip ev-icon"></i></a>`:'<span style="color:#ddd">—</span>'}</td>
       <td>${estadoPill(d.estado)}</td>
       <td><select class="edit-select" onchange="cambiarPrio('${d.id}',this.value,'${activeSheet}')">
         ${["Alta","Media","Baja"].map(o=>`<option ${o===d.prioridad?"selected":""}>${o}</option>`).join("")}
       </select></td>
       <td><select class="edit-select" onchange="cambiarCat('${d.id}',this.value,'${activeSheet}')">
-        ${["Validación","Seguridad","UI","Funcional","Compatibilidad","Exportación","Auditoría","Notificaciones","Reportes"]
-          .map(o=>`<option ${o===d.categoria?"selected":""}>${o}</option>`).join("")}
+        ${cats.map(o=>`<option ${o===d.categoria?"selected":""}>${o}</option>`).join("")}
       </select></td>
-    </tr>`).join("")}
-    </tbody></table></div>`;
+    </tr>`).join("")}</tbody></table></div>`;
 }
 
-const prioOrder = { "Alta": 0, "Media": 1, "Baja": 2 };
+const prioOrder = { Alta:0, Media:1, Baja:2 };
 
 function renderDev() {
   const data = sheetsData[activeSheetDev] || [];
-  const pendientes = data.filter(d => d.estado !== "Resuelto")
-    .sort((a,b) => (prioOrder[a.prioridad]||3) - (prioOrder[b.prioridad]||3));
-  document.getElementById("dev-count").textContent = pendientes.length + " abiertas";
-  const pantallas = [...new Set(pendientes.map(d => d.pantalla))];
-  document.getElementById("dev-list").innerHTML = pantallas.map(p => {
-    const items = pendientes.filter(d => d.pantalla === p);
+  const pend = data.filter(d=>d.estado!=="Resuelto").sort((a,b)=>(prioOrder[a.prioridad]||3)-(prioOrder[b.prioridad]||3));
+  document.getElementById("dev-count").textContent = pend.length + " abiertas";
+  const pans = [...new Set(pend.map(d=>d.pantalla))];
+  document.getElementById("dev-list").innerHTML = pans.length ? pans.map(p => {
+    const items = pend.filter(d=>d.pantalla===p);
     return `<div class="dev-pantalla">
-      <div class="dev-pantalla-title">
-        <i class="ti ti-layout-2" style="color:#888"></i>${p}
-        <span class="pill pill-gray">${items.length}</span>
-      </div>
-      ${items.map(d => {
-        const pc = d.prioridad==="Alta"?"prio-alta":d.prioridad==="Media"?"prio-media":"prio-baja";
-        const ic = d.prioridad==="Alta"?"ti-flame":d.prioridad==="Media"?"ti-alert-triangle":"ti-minus";
+      <div class="dev-pantalla-title"><i class="ti ti-layout-2" style="color:#888"></i>${p}<span class="pill pill-gray">${items.length}</span></div>
+      ${items.map(d=>{
+        const pc=d.prioridad==="Alta"?"prio-alta":d.prioridad==="Media"?"prio-media":"prio-baja";
+        const ic=d.prioridad==="Alta"?"ti-flame":d.prioridad==="Media"?"ti-alert-triangle":"ti-minus";
         return `<div class="dev-item">
           <span class="prio-btn ${pc}"><i class="ti ${ic}"></i> ${d.prioridad}</span>
           <div class="dev-item-body" style="flex:1">
             <div class="campo">Campo: ${d.campo} · <span style="color:#bbb">${d.categoria}</span>
-              ${d.evidencia ? `&nbsp;<a href="${CONFIG.excelUrl}" target="_blank" title="Ver evidencia"><i class="ti ti-paperclip ev-icon" style="font-size:12px"></i></a>` : ""}
+              ${d.evidencia?`&nbsp;<a href="${CONFIG.excelUrl}" target="_blank"><i class="ti ti-paperclip ev-icon" style="font-size:12px"></i></a>`:""}
             </div>
-            <div class="error">${d.error || "Sin descripción de error"}</div>
+            <div class="error">${d.error||"Sin descripción"}</div>
             <div style="margin-top:3px">${estadoPill(d.estado)}</div>
           </div>
         </div>`;
       }).join("")}
     </div>`;
-  }).join("") || `<div class="empty">🎉 Sin incidencias pendientes en esta hoja</div>`;
+  }).join("") : `<div class="empty">🎉 Sin incidencias pendientes</div>`;
 }
 
 function cambiarPrio(id, val, sheet) {
-  const row = (sheetsData[sheet]||[]).find(d => d.id === id);
-  if (row) {
-    row.prioridad = val;
-    localMeta[id] = { ...(localMeta[id]||{}), prioridad: val };
-    updateAll();
-  }
+  const r = (sheetsData[sheet]||[]).find(d=>d.id===id);
+  if (r) { r.prioridad=val; localMeta[id]={...(localMeta[id]||{}),prioridad:val}; updateAll(); }
 }
 function cambiarCat(id, val, sheet) {
-  const row = (sheetsData[sheet]||[]).find(d => d.id === id);
-  if (row) {
-    row.categoria = val;
-    localMeta[id] = { ...(localMeta[id]||{}), categoria: val };
-  }
+  const r = (sheetsData[sheet]||[]).find(d=>d.id===id);
+  if (r) { r.categoria=val; localMeta[id]={...(localMeta[id]||{}),categoria:val}; }
 }
 
 function updateAll() {
   const all = allData();
-  calcMetrics(all);
-  buildCharts(all);
-  buildSheetTabs("sheet-tabs", "switchSheet");
-  buildSheetTabs("sheet-tabs-dev", "switchSheetDev");
-  fillFiltros();
-  renderTabla();
-  renderDev();
+  calcMetrics(all); buildCharts(all);
+  buildSheetTabs("sheet-tabs","switchSheet");
+  buildSheetTabs("sheet-tabs-dev","switchSheetDev");
+  fillFiltros(); renderTabla(); renderDev();
 }
 
 function switchTab(name, btn) {
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.getElementById("view-" + name).classList.add("active");
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.getElementById("view-"+name).classList.add("active");
   btn.classList.add("active");
 }
 
-// La inicialización de MSAL ya se maneja arriba al cargar la página
+// ── Arranque ──
+window.addEventListener("load", () => { initMSAL().catch(console.error); });
 </script>
 </body>
 </html>
