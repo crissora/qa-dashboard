@@ -197,7 +197,7 @@ const CONFIG = {
 // ═══════════════════════════════════════════
 let msalApp = null;
 let currentAccount = null;
-const scopes = ["Files.Read", "Files.Read.All", "User.Read"];
+const scopes = ["Files.Read", "User.Read"];
 
 // Carga MSAL dinámicamente probando varios CDN hasta que uno funcione
 function cargarMSAL() {
@@ -311,27 +311,47 @@ async function loadData() {
     const token = await getToken();
     const h = { Authorization: `Bearer ${token}` };
 
-    // El archivo fue compartido por otra persona → buscarlo en "compartido conmigo"
-    const sharedResp = await fetch(
-      "https://graph.microsoft.com/v1.0/me/drive/sharedWithMe",
+    // 1º Buscar el archivo (o su acceso directo) en la raíz de TU OneDrive
+    let driveId = null, itemId = null;
+
+    const rootResp = await fetch(
+      "https://graph.microsoft.com/v1.0/me/drive/root/children",
       { headers: h }
     );
-    const sharedJson = await sharedResp.json();
-    const items = sharedJson.value || [];
-
-    // Buscar por nombre de archivo (configurable)
-    const target = items.find(it =>
+    const rootJson = await rootResp.json();
+    const rootItems = rootJson.value || [];
+    let target = rootItems.find(it =>
       it.name && it.name.toLowerCase() === CONFIG.fileName.toLowerCase()
     );
 
-    if (!target) {
-      const disponibles = items.map(i => i.name).filter(Boolean).join(", ") || "(ninguno)";
-      throw new Error(`No se encontró "${CONFIG.fileName}" entre los archivos compartidos. Disponibles: ${disponibles}`);
+    if (target) {
+      // Si es un acceso directo (shortcut), apunta a remoteItem; si es archivo normal, usa sus propios IDs
+      if (target.remoteItem) {
+        driveId = target.remoteItem.parentReference.driveId;
+        itemId  = target.remoteItem.id;
+      } else {
+        driveId = target.parentReference.driveId;
+        itemId  = target.id;
+      }
+    } else {
+      // 2º Fallback: buscar entre archivos compartidos directamente
+      const sharedResp = await fetch(
+        "https://graph.microsoft.com/v1.0/me/drive/sharedWithMe",
+        { headers: h }
+      );
+      const sharedJson = await sharedResp.json();
+      const shared = (sharedJson.value || []).find(it =>
+        it.name && it.name.toLowerCase() === CONFIG.fileName.toLowerCase()
+      );
+      if (!shared) {
+        const disp = rootItems.map(i => i.name).filter(Boolean).join(", ") || "(ninguno)";
+        throw new Error(`No se encontró "${CONFIG.fileName}". En tu OneDrive hay: ${disp}`);
+      }
+      driveId = shared.remoteItem.parentReference.driveId;
+      itemId  = shared.remoteItem.id;
     }
 
-    const driveId = target.remoteItem.parentReference.driveId;
-    const itemId  = target.remoteItem.id;
-
+    // Leer cada hoja
     for (const sheet of CONFIG.sheets) {
       const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets('${encodeURIComponent(sheet)}')/usedRange`;
       const r = await fetch(url, { headers: h });
